@@ -4,6 +4,9 @@
 # Agenda
   The project mainly focusses on detecting and generating personas who are at risk of getting Type 2 Diabetes
   and ways to prevent the risks.
+# App Flow
+    !The Flow of the application is displayed
+    https://github.com/Pushpita15/Diabet-at-ease/blob/main/app_flow.png
 # Features
   **Streamlit GUI:** A clean and intuitive user interface built with Streamlit, making it accessible for users with varying levels of technical expertise.
   **Python Based:** Entirely Coded in Python
