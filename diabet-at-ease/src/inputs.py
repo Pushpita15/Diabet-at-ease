@@ -1,11 +1,14 @@
 import streamlit as st 
 import requests
-from dotenv import load_dotenv
+import pandas as pd
+import numpy as np
+import urllib.request
 import os
-
+from dotenv import load_dotenv
+from scoring_file_v_2_0_0 import *
 load_dotenv()
-
 llama_key = os.environ.get('LLAMA_API_KEY')
+
 
 
 
@@ -36,94 +39,41 @@ st.write("Thank you for filling in the details. Please click on the button below
 submit = st.button("Check Diabetes")
 if submit:
   st.write("Your Diabetes status is: ")
-    #write the code
-  import urllib.request
-  import json
-  import os
-  import ssl
+    
+# Initialize the model
+  init()
 
-  def allowSelfSignedHttps(allowed):
-      # bypass the server certificate verification on client side
-      if allowed and not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
-          ssl._create_default_https_context = ssl._create_unverified_context
+# Define the input data
+  data = pd.DataFrame({"Column2": ["example_value"], 
+                     "HighBP": [BP], 
+                     "HighChol": [cholestrol], 
+                     "CholCheck": [checked], 
+                     "BMI": [BMI], 
+                     "Smoker": [smoke], 
+                     "Stroke": [stroke], 
+                     "HeartDiseaseorAttack": [heart_attack], 
+                     "PhysActivity": [exercise], 
+                     "Fruits": [fruits], 
+                     "Veggies": [vegies], 
+                     "HvyAlcoholConsump": [alcohol], 
+                     "AnyHealthcare": [anyHealthcare], 
+                     "GenHlth": [health], 
+                     "MentHlth": [mental_health], 
+                     "PhysHlth": [physical_health], 
+                     "DiffWalk": [difficulty], 
+                     "Sex": [sex], 
+                     "Age": [age]})
 
-  allowSelfSignedHttps(True) # this line is needed if you use self-signed certificate in your scoring service.
+# Call the run function
+  result = run({'data': data}, {'method': 'predict'})
 
-  # Request data goes here
-  # The example below assumes JSON formatting which may be updated
-  # depending on the format your endpoint expects.
-  # More information can be found here:
-  # https://docs.microsoft.com/azure/machine-learning/how-to-deploy-advanced-entry-script
-  data =  {
-    "input_data": {
-      "columns": [
-        "Column2",
-        "HighBP",
-        "HighChol",
-        "CholCheck",
-        "BMI",
-        "Smoker",
-        "Stroke",
-        "HeartDiseaseorAttack",
-        "PhysActivity",
-        "Fruits",
-        "Veggies",
-        "HvyAlcoholConsump",
-        "AnyHealthcare",
-        "GenHlth",
-        "MentHlth",
-        "PhysHlth",
-        "DiffWalk",
-        "Sex",
-        "Age"
-      ],
-      "index": [0],
-      "data": [
-        [
-          "1",
-          BP,
-          cholestrol,
-          checked,
-          BMI,
-          smoke,
-          stroke,
-          heart_attack,
-          exercise,
-          fruits,
-          vegies,
-          alcohol,
-          anyHealthcare,
-          health,
-          mental_health,
-          physical_health,
-          difficulty,
-          sex,
-          age
-        ]
-      ]
-    }
-  }
-
-  body = str.encode(json.dumps(data))
-
-  url = 'https://evyd-t2dm-wzflr.eastus2.inference.ml.azure.com/score'
-  # Replace this with the primary/secondary key, AMLToken, or Microsoft Entra ID token for the endpoint
-  api_key = os.environ.get('AZURE_API_KEY')#'mQ4ZajQ7ztxyE8CcHrA6VVucpbrolYuY'
-  if not api_key:
-      raise Exception("A key should be provided to invoke the endpoint")
-
-  # The azureml-model-deployment header will force the request to go to a specific deployment.
-  # Remove this header to have the request observe the endpoint traffic rules
-  headers = {'Content-Type':'application/json', 'Authorization':('Bearer '+ api_key), 'azureml-model-deployment': 'diabetes-binary-classificatio-1' }
-
-  req = urllib.request.Request(url, body, headers)
+# Print the result
+  print(result['Results'][0])
 
   try:
-      response = urllib.request.urlopen(req)
-
-      result = response.read()
       
-      if(result.decode("utf-8")[1] == '1'):
+      
+      if(result['Results'][0]==1):
         
         
         
@@ -169,14 +119,9 @@ if submit:
         output = output[0]["generated_text"]
         st.write(output)
         
-        st.divider()
-        user_query2 = "Driking alcohol causes harmful effects like"
-        output = query({"inputs": user_query2,})
-        output = output[0]["generated_text"]
-        st.write(output)
-        
         
         st.divider()
+        
         st.write("Health status")
         if health >=1 and health<=3:
           health_text = "overall health is good"+"\n"
@@ -196,15 +141,14 @@ if submit:
         st.write(mental_health_text)
         API_URL = "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct"
         headers = {"Authorization": f"Bearer {llama_key}"}
-        user_query = "The best yoga poses for stress relief are"
+        
         def query(payload):
           response = requests.post(API_URL, headers=headers, json=payload)
           return response.json()
 
-        
+        user_query = "Best practices for a healthy lifestyle are"
         output = query({"inputs": user_query,})
         output = output[0]["generated_text"]
-        
         st.write(output)
         
         
@@ -219,33 +163,31 @@ if submit:
         st.write(physical_health_text)
         API_URL = "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct"
         headers = {"Authorization": f"Bearer {llama_key}"}
-        user_query = "Balanced diet for a healthy lifestyle is"
+        
         def query(payload):
           response = requests.post(API_URL, headers=headers, json=payload)
           return response.json()
 
-        
+        user_query = "Best practices for a healthy lifestyle are"
         output = query({"inputs": user_query,})
         output = output[0]["generated_text"]
-        
         st.write(output)
         
         
         
       else: 
         st.write("You are not at risk of Diabetes .Keep up the good work!")
-       
+        
         API_URL = "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct"
         headers = {"Authorization": f"Bearer {llama_key}"}
-        user_query = "List Ways To prevent diabetes in 200 words:"
+        
         def query(payload):
           response = requests.post(API_URL, headers=headers, json=payload)
           return response.json()
 
-        
+        user_query = "Best practices for a healthy lifestyle are"
         output = query({"inputs": user_query,})
         output = output[0]["generated_text"]
-        output = output[len(user_query):]
         st.write(output)
         
         
@@ -260,4 +202,8 @@ if submit:
 st.write("For Organisation ")
 orgSubmit = st.button("Check the diabetic population in your area")
 st.page_link("pages/test_graph.py", label="See your location", icon="🗺️")
-#the graph will be displayed in the next page
+
+
+
+
+
